@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Series Browser</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { color: #333; }
+        ul { list-style-type: none; }
+        li { margin: 5px 0; }
+        a { text-decoration: none; color: #007bff; padding: 5px; border: 1px solid #ddd; display: inline-block; }
+        a:hover { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>TV Series Browser</h1>
+    <p>Current: {% if subpath %}{{ subpath }}{% else %}Root{% endif %}</p>
+
+    {% if parent_path != "" or subpath %}
+    <a href="/browse/{{ parent_path }}">Back</a>
+    {% endif %}
+
+    {% if dirs %}
+    <h2>Folders</h2>
+    <ul>
+        {% for dir in dirs %}
+        <li><a href="/browse/{{ (subpath + '/' + dir) if subpath else dir }}">{{ dir }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if videos %}
+    <h2>Videos</h2>
+    <ul>
+        {% for v in videos %}
+        <li><a href="{% if is_mobile %}intent://{{ host }}{{ v.href }}#Intent;action=android.intent.action.VIEW;type=video/*;scheme=http;end{% else %}/play/{{ v.href[8:] }}{% endif %}">{{ v.name }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if other_files %}
+    <h2>Other Files</h2>
+    <ul>
+        {% for file in other_files %}
+        <li><a href="/browse/{{ (subpath + '/' + file) if subpath else file }}">{{ file }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if not dirs and not videos and not other_files %}
+    <p>This folder is empty.</p>
+    {% endif %}
+</body>
+</html>
