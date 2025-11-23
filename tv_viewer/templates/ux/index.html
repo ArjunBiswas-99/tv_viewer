@@ -1,0 +1,225 @@
+<!-- UX version -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Series Browser</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            font-weight: 700;
+        }
+
+        p[style*="text-align: center"] {
+            color: #7f8c8d;
+            font-weight: 300;
+            margin: 20px 0;
+        }
+
+        h2 {
+            color: #34495e;
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            position: relative;
+        }
+
+        h2:before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(to right, #3498db, #e74c3c);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            text-align: center;
+            min-height: 280px;
+            position: relative;
+            transform: translateY(0);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .card:hover a p {
+            color: #e74c3c;
+        }
+
+        .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            background: #ecf0f1;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover img {
+            transform: scale(1.05);
+        }
+
+        .card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .card p {
+            margin: 15px;
+            padding: 10px 0;
+            font-weight: 500;
+            color: #3498db;
+            font-size: 16px;
+            line-height: 1.4;
+            transition: color 0.3s ease;
+        }
+
+        .card:has(img) p {
+            margin-top: 0;
+            padding-top: 15px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .back-link:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .back-link:before {
+            content: '← ';
+            margin-right: 8px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            .cards {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+                margin: 20px 0;
+            }
+            .card {
+                min-height: 200px;
+                border-radius: 8px;
+            }
+            .card:hover {
+                transform: translateY(-5px);
+            }
+            .card img {
+                height: 120px;
+            }
+            .card p {
+                margin: 10px;
+                padding: 5px 0;
+                font-size: 14px;
+                line-height: 1.3;
+            }
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>TV Series Browser (UX Cards)</h1>
+    <p style="text-align: center;">Current: {% if subpath %}{{ subpath }}{% else %}Root{% endif %}</p>
+
+    {% if parent_path != "" or subpath %}
+    <a href="/browse/{{ parent_path }}" class="back-link">Back</a>
+    {% endif %}
+
+    {% if dirs %}
+    <h2>Folders</h2>
+    <div class="cards">
+        {% for dir in dirs %}
+        <div class="card">
+            <a href="/browse/{{ (subpath + '/' + dir.name) if subpath else dir.name }}">
+                {% if dir.has_thumb %}
+                <img src="/thumb/{{ (subpath + '/' + dir.name) if subpath else dir.name }}/index.jpg" alt="" />
+                {% endif %}
+            </a>
+            <a href="/browse/{{ (subpath + '/' + dir.name) if subpath else dir.name }}">
+                <p>{{ dir.name }}</p>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if videos %}
+    <h2>Videos</h2>
+    <div class="cards">
+        {% for v in videos %}
+        <div class="card">
+            <a href="{% if is_mobile %}intent://{{ host }}{{ v.href }}#Intent;action=android.intent.action.VIEW;type=video/*;scheme=http;end{% else %}/play/{{ v.href[8:] }}{% endif %}">
+                <p>{{ v.name }}</p>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if other_files %}
+    <h2>Other Files</h2>
+    <ul style="text-align: center;">
+        {% for file in other_files %}
+        <li><a href="/browse/{{ (subpath + '/' + file) if subpath else file }}">{{ file }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if not dirs and not videos and not other_files %}
+    <p style="text-align: center;">This folder is empty.</p>
+    {% endif %}
+</body>
+</html>

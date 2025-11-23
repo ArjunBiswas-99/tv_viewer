@@ -7,7 +7,8 @@ import subprocess
 BASE_DIR = "D:\\TV"
 VIDEO_EXTS = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.ts', '.webm', '.m2ts']
 
-app = Flask(__name__, template_folder='templates')
+# Skeleton stripped down version: template_folder='templates'
+app = Flask(__name__, template_folder='templates/ux')
 
 @app.route('/')
 def index():
@@ -39,7 +40,20 @@ def browse(subpath):
     is_mobile = 'mobile' in request.headers.get('User-Agent', '').lower()
     # For intent URL on mobile
     host = request.host
-    return render_template('index.html', dirs=dirs, videos=videos, other_files=other_files, subpath=subpath, parent_path=parent_path, is_mobile=is_mobile, host=host)
+    # Check for thumbnails if using UX template
+    if 'ux' in app.template_folder.lower():
+        dirs_processed = []
+        for d in dirs:
+            folder_path = os.path.join(BASE_DIR, subpath, d) if subpath else os.path.join(BASE_DIR, d)
+            if os.path.exists(folder_path):
+                files = os.listdir(folder_path)
+            has_thumb = any(f.lower() == 'index.jpg' for f in files)
+        else:
+            has_thumb = False
+        dirs_processed.append({'name': d, 'has_thumb': has_thumb})
+    else:
+        dirs_processed = dirs
+    return render_template('index.html', dirs=dirs_processed, videos=videos, other_files=other_files, subpath=subpath, parent_path=parent_path, is_mobile=is_mobile, host=host)
 
 @app.route('/play/<path:filepath>')
 def play(filepath):
@@ -83,6 +97,25 @@ def stream(filepath):
 
     return Response(generate(), content_type='video/mp4', headers={'Accept-Ranges': 'bytes'})
 
+@app.route('/thumb/<path:thumbpath>')
+def thumb(thumbpath):
+    if thumbpath.endswith('/index.jpg'):
+        folder_path = os.path.join(BASE_DIR, thumbpath[:-len('/index.jpg')])
+        img_path = os.path.join(BASE_DIR, thumbpath)
+        if os.path.exists(img_path):
+            mime_type = mimetypes.guess_type(img_path)[0] or 'image/jpeg'
+            print("Thumbnail requested for:", thumbpath, "img_path:", img_path, "mime:", mime_type, "sending file")
+            try:
+                return send_file(img_path, mimetype=mime_type)
+            except Exception as e:
+                print("Error sending file:", img_path, "error:", e)
+                return '', 500
+        else:
+            print("Thumbnail requested for:", thumbpath, "img_path:", img_path, "not found")
+            return '', 404
+    print("Thumbnail requested for:", thumbpath, "invalid path")
+    return '', 404
+
 if __name__ == '__main__':
     # Get local IP
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -97,4 +130,4 @@ if __name__ == '__main__':
     print("TV Series Viewer Server")
     print(f"Access on this laptop: http://localhost:8000")
     print(f"Access from mobile/other devices: http://{local_ip}:8000")
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    app.run(host='0.0.0.0', port=8000, debug=True)
