@@ -45,12 +45,14 @@ def browse(subpath):
         dirs_processed = []
         for d in dirs:
             folder_path = os.path.join(BASE_DIR, subpath, d) if subpath else os.path.join(BASE_DIR, d)
-            if os.path.exists(folder_path):
-                files = os.listdir(folder_path)
-            has_thumb = any(f.lower() == 'index.jpg' for f in files)
-        else:
             has_thumb = False
-        dirs_processed.append({'name': d, 'has_thumb': has_thumb})
+            try:
+                if os.path.exists(folder_path):
+                    files = os.listdir(folder_path)
+                    has_thumb = any(f.lower() == 'index.jpg' for f in files)
+            except Exception as e:
+                print(f"Error checking thumb for {d}: {e}")
+            dirs_processed.append({'name': d, 'has_thumb': has_thumb})
     else:
         dirs_processed = dirs
     return render_template('index.html', dirs=dirs_processed, videos=videos, other_files=other_files, subpath=subpath, parent_path=parent_path, is_mobile=is_mobile, host=host)
